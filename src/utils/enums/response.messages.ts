@@ -1,6 +1,6 @@
 export enum RESPONSE_MESSAGES {
 	INVALID_TOKEN = 'Invalid Token',
-	USER_NOT_FOUND = 'User Not Found',
+	PROJECT_NOT_FOUND = 'Project Not Found',
 	EMAIL_VERIFIED_SUCCESSFULLY = 'Email verified successfully',
 	ALREADY_VERIFIED = 'Already Verified',
 	VERIFIED_SUCESSFULLY = 'Verified Successfully',

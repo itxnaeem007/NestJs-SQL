@@ -1,13 +1,16 @@
 /* eslint-disable @typescript-eslint/camelcase */
 import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import mongoose, { Model } from 'mongoose';
-import { project, ProjectDocument } from '../../../entities/project.entity';
+import { project } from '../../../entities/project.entity';
+import { InjectRepository } from '@nestjs/typeorm'
+import { Repository } from 'typeorm'
+import { Exceptions } from 'src/utils/exceptions/exceptions';
+import { RESPONSE_MESSAGES } from 'src/utils/enums/response.messages';
 
 @Injectable()
 export class ProjectsService {
   constructor(
-    @InjectModel(project.name) private projectModel: Model<ProjectDocument>,
+    @InjectRepository(project) 
+    private readonly projectsRepository: Repository<project>,
   ) {}
 
   /**
@@ -16,7 +19,9 @@ export class ProjectsService {
    */
   async getAllProject(): Promise<{ project: project[] }> {
     try {
-      let response = await this.projectModel.find({}).exec();
+      let response = await this.projectsRepository.find({
+				select: ['name', 'email', 'age' , 'id' ]
+			})
       return { project: response };
     } catch (error) {}
   }
@@ -25,11 +30,14 @@ export class ProjectsService {
    * @description Project listing by id
    * @author Naeem Akram
    */
-  async getProjectById(id): Promise<{ project: project }> {
+  async getProjectById(id): Promise<{ project: project[] }> {
     try {
-      let response = await this.projectModel
-        .findById({ _id: new mongoose.Types.ObjectId(id) })
-        .exec();
+      let response = await this.projectsRepository.find({
+				select: ['name', 'email', 'age' , 'id'],
+        where: {
+					id: id,
+				},
+			})
       return { project: response };
     } catch (error) {}
   }
@@ -41,11 +49,14 @@ export class ProjectsService {
    * @param age age of project onwer
    * @author Naeem Akram
    */
-  async addNewProject(newEntery: project) {
+  async addNewProject(newEntery) {
     try {
-      let response = await this.projectModel.create(newEntery);
-      return { response };
-    } catch (error) {}
+			const insertedResult = await this.projectsRepository.save(newEntery)
+      console.log('saved result', insertedResult)
+      return { insertedResult };
+    } catch (error) {
+      console.log(error)
+    }
   }
 
   /**
@@ -57,10 +68,19 @@ export class ProjectsService {
    */
   async updateProject(updates, id) {
     try {
-      const listingQuery = { _id: new mongoose.Types.ObjectId(id) };
-      let response = await this.projectModel.updateOne(listingQuery, {
-        $set: updates,
-      });
+      let projectOnDb = await this.projectsRepository.findOne({
+				where: {
+					id: id,
+				},
+				select: ['name', 'email', 'age' , 'id'],
+			})
+      if(!projectOnDb){
+        Exceptions.sendNotFoundException(RESPONSE_MESSAGES.PROJECT_NOT_FOUND)
+      }
+      const updatedData = { ...projectOnDb, ...updates };
+
+      const response = await this.projectsRepository.save(updatedData)
+
       return { response };
     } catch (error) {}
   }
@@ -72,8 +92,7 @@ export class ProjectsService {
    */
   async deleteProjectById(id) {
     try {
-      const query = { _id: new mongoose.Types.ObjectId(id) };
-      let response = await this.projectModel.deleteOne(query);
+      const response = await this.projectsRepository.delete(id)
       return { response };
     } catch (error) {}
   }

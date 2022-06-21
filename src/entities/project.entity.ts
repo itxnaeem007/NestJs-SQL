@@ -1,17 +1,16 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Entity , Column, PrimaryGeneratedColumn } from 'typeorm';
 
-@Schema({ collection: 'test' })
+@Entity('projects')
 export class project {
-  @Prop()
+  @PrimaryGeneratedColumn()
+  id: number
+
+  @Column()
   name: string
 
-  @Prop()
+  @Column()
   email: string
 
-  @Prop()
+  @Column()
   age: number
 }
-
-export const ProjectSchema = SchemaFactory.createForClass(project);
-export type ProjectDocument = project & Document;
